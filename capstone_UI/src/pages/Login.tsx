@@ -1,36 +1,47 @@
-import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { EyeIcon, EyeOffIcon, ShieldIcon, LockIcon, BoltIcon } from '../components/icons'
+import { useState, type FormEvent } from "react";
+import { Navigate, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  EyeIcon,
+  EyeOffIcon,
+  ShieldIcon,
+  LockIcon,
+  BoltIcon,
+} from "../components/icons";
 
 export default function Login() {
-  const { user, login } = useAuth()
-  const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState(false)
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) return <Navigate to="/dashboard" replace />;
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    const ok = login(username, password)
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const ok = await login(username, password);
+    setLoading(false);
+
     if (ok) {
-      setError(false)
-      navigate('/dashboard', { replace: true })
+      setError(false);
+      navigate("/dashboard", { replace: true });
     } else {
-      setError(true)
+      setError(true);
     }
-  }
+  };
 
   return (
     <div className="login-shell">
       <aside className="login-aside">
         <h1>SalesBridge</h1>
         <p>
-          A minimalistic, role-based business management platform for point-of-sale, inventory,
-          customers, and reporting — built for Administrators, Managers, Employees, and Customers.
+          A minimalistic, role-based business management platform for
+          point-of-sale, inventory, customers, and reporting — built for
+          Administrators, Managers, Employees, and Customers.
         </p>
         <div className="login-feature-list">
           <div className="login-feature">
@@ -57,10 +68,14 @@ export default function Login() {
       <div className="login-main">
         <div className="login-form-wrap">
           <h2>Welcome back</h2>
-          <p className="subtitle">Sign in to access your SalesBridge workspace.</p>
+          <p className="subtitle">
+            Sign in to access your SalesBridge workspace.
+          </p>
 
           {error && (
-            <div className="login-error-banner">Incorrect username or password!</div>
+            <div className="login-error-banner">
+              Incorrect username or password!
+            </div>
           )}
 
           <form className="login-form" onSubmit={handleSubmit}>
@@ -68,13 +83,13 @@ export default function Login() {
               <label htmlFor="username">Username</label>
               <input
                 id="username"
-                className={`input${error ? ' input-error' : ''}`}
+                className={`input${error ? " input-error" : ""}`}
                 type="text"
                 placeholder="e.g. manager"
                 value={username}
                 onChange={(e) => {
-                  setUsername(e.target.value)
-                  if (error) setError(false)
+                  setUsername(e.target.value);
+                  if (error) setError(false);
                 }}
               />
             </div>
@@ -84,13 +99,13 @@ export default function Login() {
               <div className="password-field-wrap">
                 <input
                   id="password"
-                  className={`input${error ? ' input-error' : ''}`}
-                  type={showPassword ? 'text' : 'password'}
+                  className={`input${error ? " input-error" : ""}`}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => {
-                    setPassword(e.target.value)
-                    if (error) setError(false)
+                    setPassword(e.target.value);
+                    if (error) setError(false);
                   }}
                   style={{ paddingRight: 40 }}
                 />
@@ -98,24 +113,28 @@ export default function Login() {
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ marginTop: 8 }}>
-              Sign In
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ marginTop: 8 }}
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="login-hint">
-            Prototype credentials — try <strong>manager / password</strong>,{' '}
-            <strong>admin / password</strong>, or <strong>employee / password</strong>.
+            Don't have an account? <Link to="/register">Register here</Link>.
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { products, type Product } from "../data/mockData";
 import { fetchCustomers, type Customer } from "../api/customers";
+import { createSale } from "../api/sales";
 import { useAuth } from "../context/AuthContext";
 import { SearchIcon, TrashIcon } from "../components/icons";
 
@@ -23,6 +24,8 @@ export default function RecordSales() {
   const [productSearch, setProductSearch] = useState("");
   const [redeemPoints, setRedeemPoints] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
@@ -48,9 +51,7 @@ export default function RecordSales() {
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoadingCustomers(false);
-        }
+        if (!cancelled) setLoadingCustomers(false);
       });
 
     return () => {
@@ -120,10 +121,33 @@ export default function RecordSales() {
     setProductSearch("");
     setRedeemPoints(0);
     setComplete(false);
+    setSubmitError(null);
   };
 
-  const finalize = () => {
-    setComplete(true);
+  const finalize = async () => {
+    if (!user?.token || !customer) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await createSale(user.token, {
+        customerId: customer.customerId,
+        items: cart.map((l) => ({
+          sku: l.sku,
+          quantity: l.qty,
+          unitPrice: l.price,
+        })),
+        pointsRedeemed: redeemPoints,
+      });
+      setComplete(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Failed to complete sale",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (complete) {
@@ -405,6 +429,12 @@ export default function RecordSales() {
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
+
+            {submitError && (
+              <div className="login-error-banner" style={{ marginTop: 16 }}>
+                {submitError}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -414,7 +444,7 @@ export default function RecordSales() {
           type="button"
           className="btn btn-secondary"
           onClick={() => setStep((s) => Math.max(0, s - 1))}
-          disabled={step === 0}
+          disabled={step === 0 || submitting}
         >
           Back
         </button>
@@ -430,8 +460,13 @@ export default function RecordSales() {
             Continue
           </button>
         ) : (
-          <button type="button" className="btn btn-primary" onClick={finalize}>
-            Complete Sale
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={finalize}
+            disabled={submitting}
+          >
+            {submitting ? "Processing..." : "Complete Sale"}
           </button>
         )}
       </div>

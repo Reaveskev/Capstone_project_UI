@@ -1,29 +1,59 @@
-import { useMemo, useState } from 'react'
-import { transactions } from '../data/mockData'
+import { useEffect, useMemo, useState } from "react";
+import { fetchSales, type Sale } from "../api/sales";
+import { useAuth } from "../context/AuthContext";
 
-type Filter = 'All Sales' | 'Today' | 'This Week'
-const TABS: Filter[] = ['All Sales', 'Today', 'This Week']
-
-const TODAY = new Date('2026-08-14')
+type Filter = "All Sales" | "Today" | "This Week";
+const TABS: Filter[] = ["All Sales", "Today", "This Week"];
 
 function daysAgo(dateStr: string) {
-  const d = new Date(dateStr)
-  return Math.floor((TODAY.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  const d = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function Reports() {
-  const [filter, setFilter] = useState<Filter>('All Sales')
+  const { user } = useAuth();
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("All Sales");
+
+  useEffect(() => {
+    if (!user?.token) return;
+
+    let cancelled = false;
+
+    fetchSales(user.token)
+      .then((data) => {
+        if (!cancelled) {
+          setSales(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load sales");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.token]);
 
   const filtered = useMemo(() => {
-    return transactions.filter((t) => {
-      const age = daysAgo(t.date)
-      if (filter === 'Today') return age === 0
-      if (filter === 'This Week') return age >= 0 && age <= 7
-      return true
-    })
-  }, [filter])
+    return sales.filter((s) => {
+      const age = daysAgo(s.saleDate);
+      if (filter === "Today") return age === 0;
+      if (filter === "This Week") return age >= 0 && age <= 7;
+      return true;
+    });
+  }, [sales, filter]);
 
-  const totalAmount = filtered.reduce((sum, t) => sum + t.total, 0)
+  const totalAmount = filtered.reduce((sum, s) => sum + s.totalAmount, 0);
 
   return (
     <>
@@ -37,7 +67,7 @@ export default function Reports() {
           <button
             key={t}
             type="button"
-            className={`tab${filter === t ? ' active' : ''}`}
+            className={`tab${filter === t ? " active" : ""}`}
             onClick={() => setFilter(t)}
           >
             {t}
@@ -45,7 +75,16 @@ export default function Reports() {
         ))}
       </div>
 
-      <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+      {error && (
+        <div className="login-error-banner" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
+
+      <div
+        className="metric-grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}
+      >
         <div className="card metric-card">
           <div className="metric-label">Transactions</div>
           <div className="metric-value">{filtered.length}</div>
@@ -61,7 +100,7 @@ export default function Reports() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Transaction ID</th>
+                <th>Sale ID</th>
                 <th>Customer</th>
                 <th>Items</th>
                 <th>Date</th>
@@ -69,26 +108,38 @@ export default function Reports() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
+              {loading && (
                 <tr>
                   <td colSpan={5}>
-                    <div className="empty-state">No transactions in this range.</div>
+                    <div className="empty-state">Loading sales...</div>
                   </td>
                 </tr>
               )}
-              {filtered.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.id}</td>
-                  <td>{t.customerName}</td>
-                  <td>{t.items.reduce((n, i) => n + i.qty, 0)} item(s)</td>
-                  <td>{t.date}</td>
-                  <td>${t.total.toFixed(2)}</td>
+              {!loading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="empty-state">
+                      No transactions in this range.
+                    </div>
+                  </td>
                 </tr>
-              ))}
+              )}
+              {!loading &&
+                filtered.map((s) => (
+                  <tr key={s.saleId}>
+                    <td>{s.saleId}</td>
+                    <td>{s.customerName}</td>
+                    <td>
+                      {s.items.reduce((n, i) => n + i.quantity, 0)} item(s)
+                    </td>
+                    <td>{new Date(s.saleDate).toLocaleDateString()}</td>
+                    <td>${s.totalAmount.toFixed(2)}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
       </div>
     </>
-  )
+  );
 }

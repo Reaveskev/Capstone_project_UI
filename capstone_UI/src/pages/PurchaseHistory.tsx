@@ -9,7 +9,9 @@ export default function PurchaseHistory() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState(customers[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<number | null>(
+    customers[0]?.customerId ?? null,
+  );
 
   useEffect(() => {
     if (!user?.token) return;

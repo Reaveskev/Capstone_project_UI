@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { products, type Product } from "../data/mockData";
 import { fetchCustomers, type Customer } from "../api/customers";
+import { fetchProducts, type Product } from "../api/products";
 import { createSale } from "../api/sales";
 import { useAuth } from "../context/AuthContext";
 import { SearchIcon, TrashIcon } from "../components/icons";
@@ -28,7 +28,10 @@ export default function RecordSales() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productError, setProductsError] = useState<string | null>(null);
   const [customersError, setCustomersError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,6 +57,24 @@ export default function RecordSales() {
         if (!cancelled) setLoadingCustomers(false);
       });
 
+    fetchProducts(user.token)
+      .then((data) => {
+        if (!cancelled) {
+          setProducts(data);
+          setProductsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setProductsError(
+            err instanceof Error ? err.message : "Failed to load products",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingProducts(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -68,14 +89,17 @@ export default function RecordSales() {
     );
   }, [customers, customerSearch]);
 
+  console.log("products in state:", products.length);
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return products;
     return products.filter(
       (p) =>
-        p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
+        p.productName.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q),
     );
-  }, [productSearch]);
+  }, [products, productSearch]);
 
   const subtotal = cart.reduce((sum, l) => sum + l.price * l.qty, 0);
   const discount = redeemPoints * POINTS_VALUE;
@@ -95,7 +119,10 @@ export default function RecordSales() {
           l.sku === p.sku ? { ...l, qty: l.qty + 1 } : l,
         );
       }
-      return [...prev, { sku: p.sku, name: p.name, price: p.price, qty: 1 }];
+      return [
+        ...prev,
+        { sku: p.sku, name: p.productName, price: p.price, qty: 1 },
+      ];
     });
   };
 
@@ -284,26 +311,37 @@ export default function RecordSales() {
               />
             </div>
 
-            <div className="customer-pick-grid" style={{ marginBottom: 24 }}>
-              {filteredProducts.map((p) => (
-                <button
-                  key={p.sku}
-                  type="button"
-                  className="customer-pick-card"
-                  onClick={() => addToCart(p)}
-                >
-                  <div style={{ fontWeight: 600 }}>{p.name}</div>
-                  <div
-                    style={{ fontSize: 13, color: "var(--color-text-muted)" }}
+            {loadingProducts && (
+              <div className="empty-state">Loading products...</div>
+            )}
+            {productError && (
+              <div className="login-error-banner">{productError}</div>
+            )}
+
+            {!loadingProducts && !productError && (
+              <div className="customer-pick-grid" style={{ marginBottom: 24 }}>
+                {filteredProducts.map((p) => (
+                  <button
+                    key={p.sku}
+                    type="button"
+                    className="customer-pick-card"
+                    onClick={() => addToCart(p)}
                   >
-                    {p.sku}
-                  </div>
-                  <div style={{ fontSize: 13, marginTop: 6, fontWeight: 600 }}>
-                    ${p.price.toFixed(2)}
-                  </div>
-                </button>
-              ))}
-            </div>
+                    <div style={{ fontWeight: 600 }}>{p.productName}</div>
+                    <div
+                      style={{ fontSize: 13, color: "var(--color-text-muted)" }}
+                    >
+                      {p.sku}
+                    </div>
+                    <div
+                      style={{ fontSize: 13, marginTop: 6, fontWeight: 600 }}
+                    >
+                      ${p.price.toFixed(2)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="card-title">Cart</div>
             <div className="table-wrap" style={{ marginTop: 8 }}>

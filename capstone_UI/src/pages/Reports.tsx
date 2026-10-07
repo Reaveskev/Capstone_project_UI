@@ -5,10 +5,19 @@ import { useAuth } from "../context/AuthContext";
 type Filter = "All Sales" | "Today" | "This Week";
 const TABS: Filter[] = ["All Sales", "Today", "This Week"];
 
+const SALE_DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
 function daysAgo(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
-  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  d.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
+  return Math.round((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function Reports() {
@@ -45,12 +54,17 @@ export default function Reports() {
   }, [user?.token]);
 
   const filtered = useMemo(() => {
-    return sales.filter((s) => {
-      const age = daysAgo(s.saleDate);
-      if (filter === "Today") return age === 0;
-      if (filter === "This Week") return age >= 0 && age <= 7;
-      return true;
-    });
+    return sales
+      .filter((s) => {
+        const age = daysAgo(s.saleDate);
+        if (filter === "Today") return age === 0;
+        if (filter === "This Week") return age >= 0 && age <= 6;
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime(),
+      );
   }, [sales, filter]);
 
   const totalAmount = filtered.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -132,7 +146,12 @@ export default function Reports() {
                     <td>
                       {s.items.reduce((n, i) => n + i.quantity, 0)} item(s)
                     </td>
-                    <td>{new Date(s.saleDate).toLocaleDateString()}</td>
+                    <td>
+                      {new Date(s.saleDate).toLocaleString(
+                        undefined,
+                        SALE_DATE_FORMAT,
+                      )}
+                    </td>
                     <td>${s.totalAmount.toFixed(2)}</td>
                   </tr>
                 ))}

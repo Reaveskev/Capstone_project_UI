@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCustomers, type Customer } from "../api/customers";
 import { fetchSales, type Sale } from "../api/sales";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 export default function PurchaseHistory() {
   const { user } = useAuth();

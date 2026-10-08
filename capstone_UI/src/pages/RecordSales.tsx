@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchCustomers, type Customer } from "../api/customers";
 import { fetchProducts, type Product } from "../api/products";
 import { createSale } from "../api/sales";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { SearchIcon, TrashIcon } from "../components/icons";
 
 interface CartLine {

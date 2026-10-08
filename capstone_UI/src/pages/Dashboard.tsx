@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { fetchProducts, type Product } from "../api/products";
 import { fetchSales, type Sale } from "../api/sales";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 const PIE_COLORS = ["#2f5fed", "#1f9d55", "#d98a1f", "#8a7bf0"];
 

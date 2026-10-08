@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchSales, type Sale } from "../api/sales";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 type Filter = "All Sales" | "Today" | "This Week";
 const TABS: Filter[] = ["All Sales", "Today", "This Week"];

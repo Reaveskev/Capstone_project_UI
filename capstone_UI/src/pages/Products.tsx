@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchProducts, updateProduct, type Product } from "../api/products";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { SearchIcon } from "../components/icons";
 
 export default function Products() {

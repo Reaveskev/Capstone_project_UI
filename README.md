@@ -22,6 +22,7 @@ $ npm create vite@latest capstone_UI
 # Database SetUp
 
 - Create a Database called "SalesBridge"
+- There is a seed file in the database folder
 - Open Query Tools and copy and run the following Script:
 
 CREATE TABLE Users (
@@ -83,3 +84,23 @@ BackupID SERIAL PRIMARY KEY,
 PerformedBy INTEGER REFERENCES Users(UserID),
 Status VARCHAR(20) NOT NULL
 );
+
+# Load Demo Data (optional)
+
+The `database/seed.sql` script adds demo customers, products, and sales so the dashboard and reports have something to show. The `SalesBridge` database and the tables above must already exist.
+
+From the repo root, run:
+
+```bash
+psql -U postgres -h 127.0.0.1 -d SalesBridge -f database/seed.sql
+```
+
+Or in pgAdmin, open `database/seed.sql` in the Query Tool and run it.
+
+When it finishes, it prints a row of counts for customers, products, sales, and sale items.
+
+Notes:
+
+- All the data is fake. Sale dates are relative to the day you run the script.
+- It only adds data. Existing rows are kept, and the sales part is skipped if the table already has 10 or more sales, so running it twice is safe.
+- It doesn't create login accounts. Register one in the app.

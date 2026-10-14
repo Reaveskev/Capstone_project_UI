@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchSales, type Sale } from "../api/sales";
 import { useAuth } from "../context/useAuth";
+import { daysAgo } from "../utils/dates";
 
 type Filter = "All Sales" | "Today" | "This Week";
 const TABS: Filter[] = ["All Sales", "Today", "This Week"];
@@ -12,13 +13,6 @@ const SALE_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   hour: "numeric",
   minute: "2-digit",
 };
-function daysAgo(dateStr: string) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  d.setHours(0, 0, 0, 0);
-  now.setHours(0, 0, 0, 0);
-  return Math.round((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-}
 
 export default function Reports() {
   const { user } = useAuth();

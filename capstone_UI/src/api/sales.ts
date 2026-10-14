@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./configs";
+import { apiFetch } from "./clients";
 
 export interface SaleItem {
   sku: string;
@@ -31,9 +31,7 @@ export interface CreateSalePayload {
 }
 
 export async function fetchSales(token: string): Promise<Sale[]> {
-  const response = await fetch(`${API_BASE_URL}/sales`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await apiFetch(`/sales`, token);
 
   if (!response.ok) {
     throw new Error("Failed to load sales");
@@ -46,11 +44,10 @@ export async function createSale(
   token: string,
   payload: CreateSalePayload,
 ): Promise<Sale> {
-  const response = await fetch(`${API_BASE_URL}/sales`, {
+  const response = await apiFetch(`/sales`, token, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });

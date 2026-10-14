@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./configs";
+import { apiFetch } from "./clients";
 
 export interface Customer {
   customerId: number;
@@ -16,9 +16,7 @@ export interface CustomerRequest {
 }
 
 export async function fetchCustomers(token: string): Promise<Customer[]> {
-  const response = await fetch(`${API_BASE_URL}/customers`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await apiFetch(`/customers`, token);
   if (!response.ok) throw new Error("Failed to load customers");
   return response.json();
 }
@@ -27,11 +25,10 @@ export async function createCustomer(
   token: string,
   data: CustomerRequest,
 ): Promise<Customer> {
-  const response = await fetch(`${API_BASE_URL}/customers`, {
+  const response = await apiFetch(`/customers`, token, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(data),
   });
@@ -47,11 +44,10 @@ export async function updateCustomer(
   customerId: number,
   data: CustomerRequest,
 ): Promise<Customer> {
-  const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
+  const response = await apiFetch(`/customers/${customerId}`, token, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(data),
   });
@@ -66,9 +62,9 @@ export async function deleteCustomer(
   token: string,
   customerId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
+  const response = await apiFetch(`/customers/${customerId}`, token, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
   });
+
   if (!response.ok) throw new Error("Failed to delete customer");
 }

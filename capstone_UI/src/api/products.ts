@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./configs";
+import { apiFetch } from "./clients";
 
 export interface Product {
   sku: string;
@@ -10,12 +10,7 @@ export interface Product {
 }
 
 export async function fetchProducts(token: string): Promise<Product[]> {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+  const response = await apiFetch("/products", token);
   if (!response.ok) {
     throw new Error("Failed to load products");
   }
@@ -36,11 +31,10 @@ export async function updateProduct(
   sku: string,
   payload: ProductUpdatePayload,
 ): Promise<Product> {
-  const response = await fetch(`${API_BASE_URL}/products/${sku}`, {
+  const response = await apiFetch(`/products/${sku}`, token, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
